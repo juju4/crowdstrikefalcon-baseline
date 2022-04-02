@@ -9,7 +9,6 @@ falcon_cid = input('falcon_cid', value: false, description: 'Check falcon use th
 falcon_tags = input('falcon_tags', value: false, description: 'Check falcon use appropriate tags, BU, product.')
 falcon_proxy_host = input('falcon_proxy_host', value: false, description: 'Check falcon use appropriate proxy settings')
 falcon_proxy_port = input('falcon_proxy_port', value: false, description: 'Check falcon use appropriate proxy settings')
-falcon_version = input('falcon_version', value: '6.31', description: 'Check falcon version')
 falcon_build = input('falcon_build', value: '13207', description: 'Check falcon build is above or equal')
 falcon_darwin_mdm_profile = input('falcon_darwin_mdm_profile', value: false, description: 'Check falcon has a MDM profile configured')
 
@@ -34,7 +33,7 @@ control 'falcon-1.0' do
   only_if { os.family != 'windows' }
 
   if os.darwin?
-    describe file("/Applications/Falcon.app/Contents/MacOS/Falcon") do
+    describe file('/Applications/Falcon.app/Contents/MacOS/Falcon') do
       it { should be_file }
       its('mode') { should cmp '0755' }
       it { should be_owned_by 'root' }
@@ -77,7 +76,7 @@ control 'falcon-2.0' do
   desc 'Ensure falcond is running'
   only_if { !(virtualization.role == 'guest' && virtualization.system == 'docker') && os.family != 'windows' }
   if os.darwin?
-    describe command("sudo systemextensionsctl list") do
+    describe command('sudo systemextensionsctl list') do
       its('stdout') { should_not match 'Error' }
       its('stderr') { should_not match 'Error' }
       its('stdout') { should match 'com.crowdstrike.falcon.Agent' }
@@ -87,13 +86,13 @@ control 'falcon-2.0' do
       it { should be_installed }
       it { should be_enabled }
       it { should be_running }
-    end  
+    end
     describe processes('falcond') do
-      its('users') { should eq %w[root] }
+      its('users') { should eq %w(root) }
       its('entries.length') { should eq 1 }
     end
     describe processes('falcon-sensor') do
-      its('users') { should eq %w[root] }
+      its('users') { should eq %w(root) }
       its('entries.length') { should eq 1 }
     end
     # kernel modules won't be loaded if kernel is not supported. sensor in Reduced Functionality Mode (RFM)
@@ -112,7 +111,7 @@ control 'falcon-2.0' do
       it { should_not be_disabled }
       it { should_not be_blacklisted }
     end
-    describe command("sudo /opt/CrowdStrike/falcon-kernel-check") do
+    describe command('sudo /opt/CrowdStrike/falcon-kernel-check') do
       its('stdout') { should_not match 'Error' }
       its('stderr') { should_not match 'Error' }
       its('stdout') { should include ' is supported by Sensor version' }
@@ -128,7 +127,7 @@ control 'falcon-3.0' do
   only_if { !(virtualization.role == 'guest' && virtualization.system == 'docker') && os.family != 'windows' }
   if os.darwin?
     if falcon_darwin_mdm_profile
-      describe command("profiles show") do
+      describe command('profiles show') do
         its('stdout') { should_not match 'Error' }
         its('stderr') { should_not match 'Error' }
         its('stdout') { should match 'falcon' }
@@ -173,15 +172,15 @@ control 'falcon-4.0' do
   desc 'An established network connection should exist'
   only_if { !(virtualization.role == 'guest' && virtualization.system == 'docker') && os.family != 'windows' }
   if os.darwin?
-    describe command("sudo /Applications/Falcon.app/Contents/Resources/falconctl stats") do
-        its('stderr') { should_not match 'Error' }
-        its('stdout') { should match /State: connected/ }
+    describe command('sudo /Applications/Falcon.app/Contents/Resources/falconctl stats') do
+      its('stderr') { should_not match 'Error' }
+      its('stdout') { should match /State: connected/ }
     end
   else
-    describe command("sudo netstat -tap | grep falcon") do
+    describe command('sudo netstat -tap | grep falcon') do
       its('stdout') { should_not match 'Error' }
       its('stderr') { should_not match 'Error' }
-      its('stdout') { should match /^tcp .* ec2-.*:https ESTABLISHED .*\/falcon-sensor/ }
+      its('stdout') { should match %r{^tcp .* ec2-.*:https ESTABLISHED .*\/falcon-sensor} }
     end
   end
 end
@@ -193,9 +192,9 @@ control 'falcon-5.0' do
   only_if { !(virtualization.role == 'guest' && virtualization.system == 'docker') && os.family != 'windows' }
   if os.darwin?
     describe command("log show --predicate 'process == \"com.crowdstrike.falcon.Agent\"' --last 20h | tail -10") do
-        its('stdout') { should_not match 'Error' }
-        its('stderr') { should_not match 'Error' }
-        its('stdout') { should_not match 'Caller lacks TCC authorization for Full Disk Access' }
+      its('stdout') { should_not match 'Error' }
+      its('stderr') { should_not match 'Error' }
+      its('stdout') { should_not match 'Caller lacks TCC authorization for Full Disk Access' }
     end
   elsif os.redhat?
     describe file(falcon_redhat_system_log) do
@@ -217,4 +216,3 @@ control 'falcon-5.0' do
     end
   end
 end
-  

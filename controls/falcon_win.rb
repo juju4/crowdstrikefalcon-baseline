@@ -5,10 +5,7 @@
 
 title 'Falcon Windows section'
 
-falcon_cid = input('falcon_cid', value: false, description: 'Check falcon use the correct Customer ID or CID')
 falcon_tags = input('falcon_tags', value: false, description: 'Check falcon use appropriate tags, BU, product.')
-falcon_version = input('falcon_version', value: '6.31', description: 'Check falcon version')
-falcon_build = input('falcon_build', value: '13207', description: 'Check falcon build is above or equal')
 
 falcon_dir = 'C:\Windows\System32\drivers\CrowdStrike'
 falcond_bin = 'C:\Program Files\CrowdStrike\CSFalconService.exe'
@@ -27,7 +24,7 @@ control 'falconwin-1.0' do
   end
   describe registry_key({
     hive: 'HKEY_LOCAL_MACHINE',
-    key: 'SOFTWARE\CrowdStrike\FWPolicy'
+    key: 'SOFTWARE\CrowdStrike\FWPolicy',
     }) do
     its('EnforcementLevel') { should eq 0 }
   end
@@ -70,7 +67,7 @@ control 'falconwin-3.0' do
   if falcon_tags
     describe registry_key({
       hive: 'HKEY_LOCAL_MACHINE',
-      key: 'SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-7058-48c9-a204-725362b67639}\Default'
+      key: 'SYSTEM\CrowdStrike\{9b03c1d9-3138-44ed-9fae-d9f4c034b88d}\{16e0423f-7058-48c9-a204-725362b67639}\Default',
       }) do
       its('GroupingTags') { should eq falcon_tags }
     end
@@ -83,9 +80,9 @@ control 'falconwin-4.0' do
   desc 'An established network connection should exist'
   only_if { os.family == 'windows' }
 
-    describe command("netstat.exe -f") do
-      its('stdout') { should_not match 'Error' }
-      its('stderr') { should_not match 'Error' }
-      its('stdout') { should match /TCP.*ec2-.*.us-west-1.compute.amazonaws.com:https  ESTABLISHED/ }
+  describe command('netstat.exe -f') do
+    its('stdout') { should_not match 'Error' }
+    its('stderr') { should_not match 'Error' }
+    its('stdout') { should match /TCP.*ec2-.*.us-west-1.compute.amazonaws.com:https  ESTABLISHED/ }
   end
 end
